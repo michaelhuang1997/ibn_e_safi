@@ -1,0 +1,27 @@
+---
+title: "jasusi_testing"
+author: "Michael Huang"
+date: "2022-12-19"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(jsonlite)
+library(rvest)
+library(tidytext)
+library(purrr)
+library(xml2)
+library(plotly)
+library(stringr)
+library(widyr)
+library(ggraph)
+library(ragg)
+library(igraph)
+```
+
+
