@@ -6,22 +6,60 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = F, warning = F)
 ```
 
 ```{r}
 library(tidyverse)
-library(jsonlite)
-library(rvest)
 library(tidytext)
-library(purrr)
-library(xml2)
-library(plotly)
-library(stringr)
 library(widyr)
-library(ggraph)
-library(ragg)
 library(igraph)
+library(ggraph)
+library(textstem)
+library(ragg)
+library(topicmodels)
+library(forcats)
 ```
 
+```{r}
+df <- read_csv("jasusi_all.csv")
+```
+
+```{r}
+stopwords <- read.delim("stopwords-ur.txt")
+```
+
+```{r}
+cleaned_df <- df %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stopwords, by="word")
+```
+
+```{r}
+dtm <- cleaned_df %>%
+  unite(document, title) %>%
+  count(document, word) %>%
+  cast_dtm(document, word, n) 
+```
+
+```{r}
+lda <- LDA(dtm, k = 5, control = list(seed = 2016)) # assign 8 topics 
+```
+
+```{r dev="ragg"}
+topics <- tidy(lda, matrix = "beta") # extract the per-topic-per-word probabilities, beta
+
+top_terms <- topics %>%
+  group_by(topic) %>%
+  slice_max(beta, n = 10) %>% # find the 10 words that are most common within each topic
+  ungroup() %>%
+  arrange(topic, -beta) # arrange the words in each topic by the descending order of beta scores
+
+top_terms %>%
+  mutate(term = reorder_within(term, beta, topic)) %>%  # reorder words based on their beta scores within each topic
+  ggplot(aes(beta, term, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  scale_y_reordered() 
+```
 
